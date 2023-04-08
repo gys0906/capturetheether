@@ -80,3 +80,57 @@ collectPenalty() 中的减法操作存在溢出，问题是合约没有显式的
 ## Donation
 donate() 中 donation 定义时未指定引用，默认指向 slot0
 对 donation 的修改会覆盖 slot0 和 slot1，即 donations.length 和 owner
+## Fifty years
+题目要求是将合约中的 ETH 全部取走
+构造特定的 contribution，其 unlockTimestamp 足够小，通过 withdraw 函数的校验
+令 head 为 0，使得调用 withdraw 函数时可以将所有 contribution 资金都取出
+contribution.timestamp 会覆盖 head，将 1 和 2 结合起来，插入 timestamp 为 0 的 contribution
+
+再次调用 upsert 构建 contribution2
+// timestamp 设置为 0，等于 contribution1.unlockTimestamp + 1 days，可以通过 require 检查
+contract.upsert(10, 0)
+需要调用 contract.withdraw(1) 就可以取出合约内所有资金
+## Fuzzy identity
+构造一个合约，实现 name 接口且合约地址中包含 “badc0de”
+合约地址得包含 “badc0de”
+address = keccak(RLP([deployer, nonce]))[12:]
+部署合约contract IdentifierHacker is IName {
+    
+    function name() external view override returns (bytes32) {
+        return bytes32("smarx");
+    }
+    
+    function auth(FuzzyIdentityChallenge c) public {
+        c.authenticate();
+    }
+    
+    function checkCompleted(FuzzyIdentityChallenge c) public view returns (bool) {
+        return c.isComplete();
+    }
+}
+## Public Key
+找到 owner 的 publicKey
+从 etherscan 上找到 owner 发送过的交易的 rawtx，可以从 rawtx 中得到签名和交易信息，有了交易信息、签名，就可以恢复出公钥
+const EthereumTx = require('ethereumjs-tx').Transaction
+
+const rawtx = '0xf87080843b9aca0083015f90946b477781b0e68031109f21887e6b5afeaaeb002b808c5468616e6b732c206d616e2129a0a5522718c0f95dde27f0827f55de836342ceda594d20458523dd71a539d52ad7a05710e64311d481764b5ae8ca691b05d14054782c7d489f3511a7abf2f5078962'
+
+let tx = new EthereumTx(rawtx, {chain: 'ropsten'})
+let publicKey = tx.getSenderPublicKey().toString('hex')
+console.log(publicKey
+## Account takeover
+得到 owner 的私钥
+owner 发送的最早两笔交易，他们签名的 r 值是相同的
+const EthereumTx = require('ethereumjs-tx').Transaction
+
+const rawtx1 = '0xf86b80843b9aca008252089492b28647ae1f3264661f72fb2eb9625a89d88a31881111d67bb1bb00008029a069a726edfb4b802cbf267d5fd1dabcea39d3d7b4bf62b9eeaeba387606167166a07724cedeb923f374bef4e05c97426a918123cc4fec7b07903839f12517e1b3c8'
+const rawtx2 = '0xf86b01843b9aca008252089492b28647ae1f3264661f72fb2eb9625a89d88a31881922e95bca330e008029a069a726edfb4b802cbf267d5fd1dabcea39d3d7b4bf62b9eeaeba387606167166a02bbd9c2a6285c2b43e728b17bda36a81653dd5f4612a2e0aefdb48043c5108de'
+
+let tx1 = new EthereumTx(rawtx1, {chain: 'ropsten'})
+let tx2 = new EthereumTx(rawtx2, {chain: 'ropsten'})
+console.log(tx1.r.toString('hex') === tx2.r.toString('hex')) // true
+得到私钥后利用 owner 地址调用目标的 authenticate 方法
+
+
+
+
